@@ -34,7 +34,7 @@ class CogManager(utils.Cog):
             return await ctx.send("Please specify extensions in order to load.")
 
         exts = self.extensions if extensions[0] == "~" else extensions
-        [ctx.bot.load_extension(ext) for ext in exts]
+        [await ctx.bot.load_extension(ext) for ext in exts]
         await ctx.send(f'Loaded extension{"s" if exts else ""}: ' + ", ".join(exts))
 
     @cog.command(name="unload")

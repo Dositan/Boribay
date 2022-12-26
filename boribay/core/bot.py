@@ -10,7 +10,7 @@ from datetime import datetime
 import aiohttp
 import asyncpg
 import discord
-from discord.ext import commands
+from discord.ext import commands, ipc
 
 from boribay.settings import DEVELOPMENT
 from .database import Cache, DatabaseManager
@@ -33,6 +33,8 @@ class Boribay(commands.Bot):
         self._BotBase__cogs = commands.core._CaseInsensitiveDict()
         self.cli = cli_flags
         self.counter = Counter()
+
+        self.ipc = ipc.Server(self, secret_key="🐼")
 
         self._launch_time = datetime.now()
 
@@ -172,6 +174,7 @@ class Boribay(commands.Bot):
         else:
             extensions = [
                 "boribay.extensions.help",
+                "boribay.extensions.ipc",
                 "boribay.extensions.economy",
                 "boribay.extensions.fun",
                 "boribay.extensions.images",
