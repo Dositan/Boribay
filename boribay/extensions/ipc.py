@@ -1,10 +1,13 @@
-import json
 from discord.ext import commands, ipc
 from discord.ext.ipc.server import Server
 from discord.ext.ipc.objects import ClientPayload
 
-class Routes(commands.Cog):
+from boribay.core import utils
+
+class Routes(utils.Cog):
+
     def __init__(self, bot: commands.Bot):
+        self.icon = "💾"
         self.bot = bot
         if not hasattr(bot, "ipc"):
             bot.ipc = ipc.Server(self, secret_key="🐼")

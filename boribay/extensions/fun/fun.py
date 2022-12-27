@@ -7,9 +7,11 @@ from time import time
 from typing import Optional
 
 import discord
+from discord import app_commands
 from discord.ext import commands
 
 from boribay.core import Boribay, utils
+from boribay.core.utils import make_image, Manip
 
 
 class Fun(utils.Cog):
@@ -36,14 +38,9 @@ class Fun(utils.Cog):
         fp = BytesIO(await r.read())
         return discord.File(fp, fn or "dagpi.png")
 
-    @utils.command(aliases=("rps",))
+    @commands.hybrid_command()
     async def rockpaperscissors(self, ctx: utils.Context) -> None:
-        """The Rock-Paper-Scissors game.
-
-        There are three different reactions:
-        ------------------------------------
-        🪨 - for rock; 📄 - for paper; ✂ - for scissors.
-        """
+        """The Rock-Paper-Scissors game."""
         rps_logic = {
             "🪨": {"🪨": "draw", "📄": "lose", "✂": "win"},
             "📄": {"🪨": "win", "📄": "draw", "✂": "lose"},
@@ -75,41 +72,25 @@ class Fun(utils.Cog):
         except asyncio.TimeoutError:
             await ctx.try_delete(msg)
 
-    @utils.command(aliases=("tr", "typerace"))
+    @commands.hybrid_command()
     @commands.max_concurrency(1, per=commands.BucketType.channel)
-    async def typeracer(self, ctx: utils.Context, timeout: float = 60.0) -> None:
-        """Typeracer game. Compete with others and find out the best typist.
-
-        If you don't like the given quote, react with a wastebasket to close the game.
-
-        Example
-        -------
-            **{p}tr** - the default round for 60 seconds.
-            **{p}typeracer --timeout 30** - makes a round for 30 seconds.**
-
-        Parameters
-        ----------
-        timeout : float, optional
-            Set your own time given for typing, by default 60.0
-
-        Raises
-        ------
-        commands.BadArgument
-            When the provided time does not fit the limits (10 < x < 120).
-        """
+    @app_commands.describe(timeout="timer for typing contest")
+    async def typeracer(self, ctx: commands.Context, timeout: float = 60.0) -> None:
+        """Typeracer game. Compete with others and find out the best typist."""
         if not 10.0 < timeout < 120.0:
-            raise commands.BadArgument(
-                "Timeout limit has been reached. Specify between 10 and 120."
+            return await ctx.send(
+                "Timeout limit has been reached. Please specify between 10 and 120."
             )
 
         async with ctx.loading:
             r = await ctx.bot.session.get("https://api.quotable.io/random")
             quote = await r.json()
             content = quote["content"]
-            buffer = await utils.Manip.typeracer("\n".join(textwrap.wrap(content, 30)))
+            buffer = await Manip.typeracer("\n".join(textwrap.wrap(content, 30)))
 
         embed = ctx.embed(
-            title="Typeracer", description="see who is the fastest at typing."
+            title="Typeracer",
+            description="see who is the fastest at typing."
         ).set_image(url="attachment://typeracer.png")
         embed.set_footer(text=f'© {quote["author"]}')
 
@@ -150,10 +131,12 @@ class Fun(utils.Cog):
         except asyncio.TimeoutError:
             await ctx.try_delete(race)
 
-    @utils.command()
+    @commands.hybrid_command()
     async def dadjoke(self, ctx: utils.Context):
+        """Get a dadjoke from icanhazdadjoke.com/"""
         resp = await self.bot.session.get(
-            "https://icanhazdadjoke.com/", headers={"Accept": "text/plain"}
+            "https://icanhazdadjoke.com/",
+            headers={"Accept": "text/plain"}
         )
         if resp.status != 200:
             return await ctx.send("Could not fetch the joke. Please try again later!")
@@ -162,35 +145,19 @@ class Fun(utils.Cog):
         embed = ctx.embed(title="Here is yo joke:", description=joke)
         await ctx.send(embed=embed)
 
-    @utils.command()
+    @commands.hybrid_command()
     async def qr(self, ctx: utils.Context, url: Optional[str]) -> None:
-        """Make QR-code from a given URL.
-        URL can be an atttachment or a user avatar.
-
-        Args:
-            url (Optional[str]): URL to make the QR-code from.
-
-        Example:
-            **{p}qr @Dosek** - sends the QR code using Dosek's avatar.
-        """
-        url = await utils.make_image(ctx, url, return_url=True)
-        r = await ctx.bot.session.get(
-            "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" + url
-        )
+        """Generate QR-code for a given URL."""
+        url = await make_image(ctx, url, return_url=True)
+        r = await ctx.bot.session.get(f"https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={url}")
         io = BytesIO(await r.read())
         await ctx.send(file=discord.File(io, "qr.png"))
 
-    @utils.command()
+    @commands.hybrid_command()
+    @app_commands.describe(image="any kind of image to put caption on it.")
     async def caption(self, ctx: utils.Context, image: Optional[str]) -> None:
-        """Get caption for an image.
-
-        Example:
-            **{p}caption @Dosek** - sends caption for Dosek's avatar.
-
-        Args:
-            image (Optional[str]): An image you want to get caption for.
-        """
-        image = await utils.make_image(ctx, image, return_url=True)
+        """Get caption for any image."""
+        image = await make_image(ctx, image, return_url=True)
 
         r = await ctx.bot.session.post(
             "https://captionbot.azurewebsites.net/api/messages",
@@ -199,68 +166,31 @@ class Fun(utils.Cog):
         embed = ctx.embed(title=await r.text())
         await ctx.send(embed=embed.set_image(url=image))
 
-    @utils.command()
+    @commands.hybrid_command()
+    @app_commands.describe(image="image to trigger")
     async def triggered(self, ctx: utils.Context, image: Optional[str]) -> None:
-        """Make the "TrIgGeReD" meme.
-
-        Example:
-            **{p}triggered @Dosek** - triggers Dosek.
-
-        Args:
-            image (Optional[str]): An image you want to get "triggered".
-        """
-        image = await utils.make_image(ctx, image, return_url=True)
+        """Make the "TrIgGeReD" meme."""
+        image = await make_image(ctx, image, return_url=True)
         file = await self.dagpi_image(f"triggered?url={image}", "triggered.gif")
         await ctx.send(file=file)
 
-    @utils.command(name="ascii")
+    @commands.hybrid_command(name="ascii")
+    @app_commands.describe(image="image to convert to ascii")
     async def ascii_command(self, ctx: utils.Context, image: Optional[str]) -> None:
-        """Get the ASCII version of an image.
-
-        Example:
-            **{p}ascii @Dosek** - sends ASCII version of Dosek's avatar.
-
-        Args:
-            image (Optional[str]): An image you want to ASCII'ize.
-        """
-        image = await utils.make_image(ctx, image, return_url=True)
+        """Get the ASCII version of an image."""
+        image = await make_image(ctx, image, return_url=True)
         file = await self.dagpi_image(f"ascii?url={image}", "ascii.png")
         await ctx.send(file=file)
 
-    @utils.command()
-    async def coinflip(self, ctx: utils.Context) -> None:
-        """Play the simple coinflip game.
-
-        Chances:
-        --------
-        **head → 49.5%**; **tail → 49.5%**; **side → 1%**
-        """
-        choice = random.choices(
-            population=["head", "tail", "side"], weights=[0.49, 0.49, 0.02], k=1
-        )[0]
-
-        if choice == "side":
-            return await ctx.send("Coin was flipped **to the side**!")
-
-        await ctx.send(f"Coin flipped to the `{choice}`, no reward.")
-
-    @utils.command()
+    @commands.hybrid_command()
+    @app_commands.describe(
+        color="color of player.",
+        name="name of player.",
+    )
     async def eject(
-        self, ctx: utils.Context, color: str.lower, *, name: Optional[str]
+        self, ctx: utils.Context, color: str.lower, name: Optional[str]
     ) -> None:
-        """Among Us "ejected" meme maker.
-
-        Example:
-            **{p}eject blue yes Dosek** - blue impostor with the nick "Dosek".
-
-        Args:
-            color (str.lower): Color of an ejected guy.
-            name (Optional[str]): The name for the impostor.
-
-        Available colors:
-            black • blue • brown • cyan • darkgreen • lime
-            • orange • pink • purple • red • white • yellow
-        """
+        """Among Us "ejected" meme maker."""
         # This check is still bad since the API colors are limited
         # and ImageColor.getrgb supports more colors.
         if not utils.color_exists(color):
@@ -271,27 +201,17 @@ class Fun(utils.Cog):
 
         url = f"https://vacefron.nl/api/ejected?name={name}&impostor=true&crewmate={color}"
 
-        # Calling the API.
         r = await self.bot.session.get(url)
-        # Bufferizing the fetched image.
         io = BytesIO(await r.read())
 
-        # Sending to the utils.Contextual channel.
         await ctx.send(file=discord.File(fp=io, filename="ejected.png"))
 
-    @utils.command(name="pp", aliases=("peepee",))
+    @commands.hybrid_command(name="pp")
+    @app_commands.describe(member="@ of member whose pp size you wanna check.")
     async def command_pp(
         self, ctx: utils.Context, member: Optional[discord.Member]
     ) -> None:
-        """Get the random size of your PP.
-
-        Example:
-            **{p}pp @Dosek** - sends Dosek's pp size.
-
-        Args:
-            member (Optional[discord.Member]): A member to check the pp size of.
-            Takes you as the member if no one was mentioned.
-        """
+        """Get the random size of your PP."""
         member = member or ctx.author
         sz = 100 if member.id in self.bot.owner_ids else random.randint(1, 10)
-        await ctx.send(f"{member}'s pp size is:\n3{'=' * sz}D")
+        await ctx.send(f"{member.mention}'s pp size is:\n3{'=' * sz}D")

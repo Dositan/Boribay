@@ -20,9 +20,6 @@ class Images(utils.Cog):
 
     icon = "🖼"
 
-    def __init__(self, bot: commands.Bot):
-        self.bot = bot
-
     @commands.hybrid_command()
     @app_commands.describe(member="@member whose avatar you want to have")
     async def avatar(
