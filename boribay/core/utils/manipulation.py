@@ -282,8 +282,8 @@ class Manip:
         buffer.seek(0)
         return buffer
 
-    # https://github.com/AlexFlipnote/alex_api_archive/blob/master/render/achievement.py
-    # thanks a lot!
+    @staticmethod
+    @executor
     def achievement(title: str, ach: str, colour=(255, 255, 0, 255)):
         front = Image.open(f"{IMAGE_PATH}/achievement/achievement.png")
         txt = Image.new("RGBA", (len(ach) * 15, 64))

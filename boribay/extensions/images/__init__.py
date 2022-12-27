@@ -1,6 +1,5 @@
 from .images import Images
 
 
-# Setting up the cog.
 async def setup(bot):
-    await bot.add_cog(Images())
+    await bot.add_cog(Images(bot))
