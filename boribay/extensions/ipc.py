@@ -1,3 +1,5 @@
+import json
+
 from discord.ext import commands, ipc
 from discord.ext.ipc.server import Server
 from discord.ext.ipc.objects import ClientPayload
@@ -20,11 +22,15 @@ class Routes(utils.Cog):
         self.bot.ipc = None
 
     @Server.route()
-    async def general_info(self, data: ClientPayload):
-        return str({
-            "cogs": self.bot.cogs,
-            "commands": self.bot.all_commands
-        })
+    async def list_commands(self, _: ClientPayload):
+        return json.dumps([
+            {
+                cog_name: [{
+                    'name': str(c),
+                    'description': c.help
+                } for c in commands.get_commands()]
+            } for cog_name, commands in self.bot.cogs.items()
+        ])
 
 async def setup(bot):
     await bot.add_cog(Routes(bot))

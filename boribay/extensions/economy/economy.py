@@ -38,7 +38,7 @@ class Economics(utils.Cog):
         )
         await self.economy_cache.refresh()
         await ctx.send(
-            "Welcome to the economics system! (test has successfully been passed.)"
+            "Welcome to the economics system!"
         )
 
     @utils.command()
@@ -181,7 +181,7 @@ class Economics(utils.Cog):
         member = member or ctx.author
 
         if not (data := ctx.user_cache[member.id]):
-            raise exceptions.DefaultError(f"{member} has no profile card.")
+            raise exceptions.EconomyError(f"{member} has no profile card.")
 
         data = copy.copy(data)
 

@@ -40,6 +40,7 @@ class Developer(utils.Cog):
         guilds: commands.Greedy[discord.Object],
         spec: Optional[Literal["~", "*", "^"]] = None
     ) -> None:
+        """Synchronize changes in app commands with Discord API"""
         async with ctx.loading:
             if not guilds:
                 if spec == "~":
