@@ -1,6 +1,6 @@
 <center>
   <h2>
-    <img src="https://cdn.discordapp.com/attachments/766571630268252180/827824066869985280/circle.png" height='100px' width='100px' />
+    <img src="./data/boribay.jpg" height='100px' width='100px' style='border-radius: 999px;' />
   </h2>
 
   <h1>Boribay 💂‍♂️</h1>
